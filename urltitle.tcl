@@ -6,6 +6,7 @@
 # Detects URL from IRC channels and prints out the title
 #
 # Version Log:
+# 0.05     .onion parsing support added by df @ cryptostorm.is
 # 0.04     HTML parsing for titles added
 # 0.03c    HTTPS support is now optional and will be automatically dropeed if TCL TSL package does not exist
 # 0.03b    Some formatting
@@ -46,7 +47,7 @@ namespace eval UrlTitle {
 
   # INTERNAL
   set last 1                ;# Internal variable, stores time of last eggdrop use, don't change..
-  set scriptVersion 0.03c
+  set scriptVersion 0.05
 
   # PACKAGES
   package require http                ;# You need the http package..
@@ -87,7 +88,7 @@ namespace eval UrlTitle {
             ::http::unregister https
           }
           if {[string length $urtitle]} {
-            putserv "PRIVMSG $chan :Title: $urtitle"
+            putserv "PRIVMSG $chan :\[ $urtitle \]"
           }
           break
         }
@@ -101,6 +102,10 @@ namespace eval UrlTitle {
     variable timeout
     set title ""
     if {[info exists url] && [string length $url]} {
+      if {([string match "*.onion*" '$url'])} {
+        ::http::config -proxyhost localhost
+        ::http::config -proxyport 8118
+      }
       if {[catch {set http [::http::geturl $url -timeout $timeout]} results]} {
         putlog "Connection to $url failed"
       } else {
